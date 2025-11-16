@@ -14,24 +14,25 @@ body {
     background: linear-gradient(#1a1a1a, #07101a);
     color: #fff;
     position: relative;
+    padding: 0 10px;
 }
 
 /* ---------- HEADER ---------- */
 header {
     text-align: center;
-    padding: 80px 20px 60px 20px;
+    padding: 50px 5% 30px 5%;
     position: relative;
 }
 
 header h1 {
-    font-size: 60px;
+    font-size: clamp(2rem, 8vw, 4rem); /* responsivo */
     color: #ffdd57;
     margin-bottom: 10px;
     text-shadow: 2px 2px 10px #000;
 }
 
 header h2 {
-    font-size: 28px;
+    font-size: clamp(1rem, 4vw, 1.75rem);
     color: #fff;
     text-shadow: 1px 1px 5px #000;
 }
@@ -39,17 +40,17 @@ header h2 {
 /* ---------- INPUT & BOTÃO ---------- */
 #inputSection {
     text-align: center;
-    margin-top: 40px;
+    margin-top: 30px;
 }
 
 input {
-    padding: 15px 20px;
-    width: 300px;
-    max-width: 80%;
-    font-size: 18px;
+    padding: 1em 1.5em;
+    width: 90%;
+    max-width: 400px;
+    font-size: 1rem;
     border-radius: 30px;
     border: none;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     outline: none;
     background: rgba(255,255,255,0.2);
     color: #fff;
@@ -62,8 +63,8 @@ input::placeholder { color: #fffb; }
 input:focus { background: rgba(255,255,255,0.35); }
 
 button {
-    padding: 15px 30px;
-    font-size: 18px;
+    padding: 0.8em 2em;
+    font-size: 1rem;
     border-radius: 30px;
     border: none;
     cursor: pointer;
@@ -71,21 +72,24 @@ button {
     color: #fff;
     font-weight: bold;
     transition: transform 0.2s ease, box-shadow 0.3s ease;
+    width: 90%;
+    max-width: 400px;
 }
 
 button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 25px #ff6347;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px #ff6347;
 }
 
 /* ---------- RESULTADO ---------- */
 #resultado {
-    margin-top: 50px;
-    font-size: 28px;
+    margin-top: 30px;
+    font-size: clamp(1rem, 4vw, 1.75rem);
     font-weight: bold;
     color: #27ae60;
     min-height: 60px;
     text-align: center;
+    padding: 0 5%;
 }
 
 #resultado span {
@@ -95,7 +99,7 @@ button:hover {
 
 @keyframes bounce {
     0% { transform: translateY(0); }
-    100% { transform: translateY(-15px); }
+    100% { transform: translateY(-10px); }
 }
 
 /* ---------- NEVE ---------- */
@@ -132,14 +136,12 @@ button:hover {
 /* ---------- LUZES ---------- */
 .light {
     position: absolute;
-    width: 15px;
-    height: 15px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background: yellow;
-    box-shadow: 0 0 20px yellow;
-    animation-name: blink;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
+    box-shadow: 0 0 15px yellow;
+    animation: blink linear infinite;
 }
 
 @keyframes blink {
@@ -151,20 +153,11 @@ button:hover {
 footer {
     text-align: center;
     padding: 20px;
-    font-size: 16px;
+    font-size: 0.9rem;
     color: #fff;
-    margin-top: 80px;
+    margin-top: 50px;
 }
 footer a { color: #ffdd57; text-decoration: none; }
-
-/* ---------- RESPONSIVO ---------- */
-@media(max-width:600px){
-    header h1 { font-size: 48px; }
-    header h2 { font-size: 20px; }
-    input { font-size: 16px; padding: 12px 15px; }
-    button { font-size: 16px; padding: 12px 20px; }
-    #resultado { font-size: 22px; }
-}
 </style>
 </head>
 <body>
@@ -230,8 +223,8 @@ function mostrarResultado(){
 for(let i=0;i<70;i++){
     let flake=document.createElement('div');
     flake.className='snowflake';
-    flake.style.left=Math.random()*window.innerWidth+'px';
-    flake.style.fontSize=(Math.random()*15+10)+'px';
+    flake.style.left=Math.random()*100+'vw';
+    flake.style.fontSize=(Math.random()*1.5+0.8)+'em';
     flake.style.animationDuration=(Math.random()*5+5)+'s';
     flake.style.opacity=Math.random();
     flake.innerHTML='❄';
@@ -243,9 +236,10 @@ function criarConfetes(){
     for(let i=0;i<50;i++){
         let c=document.createElement('div');
         c.className='confetti';
-        c.style.left=Math.random()*window.innerWidth+'px';
+        c.style.left=Math.random()*100+'vw';
         c.style.background=`hsl(${Math.random()*360},70%,60%)`;
-        c.style.width=c.style.height=Math.random()*10+5+'px';
+        let size = Math.random()*8+4;
+        c.style.width=c.style.height=size+'px';
         c.style.animationDuration=(Math.random()*3+3)+'s';
         document.body.appendChild(c);
         setTimeout(()=>c.remove(),4000);
@@ -253,14 +247,14 @@ function criarConfetes(){
 }
 
 // ---------- LUZES ----------
-const header = document.querySelector('header');
+const headerEl = document.querySelector('header');
 for(let i=0;i<30;i++){
     let l=document.createElement('div');
     l.className='light';
-    l.style.left=(i*50)+'px';
-    l.style.top='0px';
+    l.style.left=(i*10)+'%';
+    l.style.top='0';
     l.style.animationDuration=(Math.random()*1+1)+'s';
-    header.appendChild(l);
+    headerEl.appendChild(l);
 }
 </script>
 
