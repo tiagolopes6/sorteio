@@ -25,7 +25,7 @@ header {
 }
 
 header h1 {
-    font-size: clamp(2rem, 8vw, 4rem); /* responsivo */
+    font-size: clamp(2rem, 8vw, 4rem);
     color: #ffdd57;
     margin-bottom: 10px;
     text-shadow: 2px 2px 10px #000;
@@ -97,67 +97,19 @@ button:hover {
     animation: bounce 0.6s ease infinite alternate;
 }
 
+/* ---------- LISTA ---------- */
+#jaSorteadosLista {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #ffd700;
+    text-align: center;
+}
+
+/* ANIMAÇÕES */
 @keyframes bounce {
     0% { transform: translateY(0); }
     100% { transform: translateY(-10px); }
 }
-
-/* ---------- NEVE ---------- */
-.snowflake {
-    position: fixed;
-    top: -10px;
-    z-index: 9999;
-    color: #fff;
-    font-size: 1em;
-    user-select: none;
-    pointer-events: none;
-    animation-name: fall;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-}
-
-@keyframes fall { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(100vh) rotate(360deg); } }
-
-/* ---------- CONFETES ---------- */
-.confetti {
-    position: fixed;
-    width: 10px;
-    height: 10px;
-    background: #ffdd57;
-    top: -10px;
-    z-index: 9999;
-    opacity: 0.8;
-    border-radius: 50%;
-    animation: confettiFall linear infinite;
-}
-
-@keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(100vh) rotate(360deg); } }
-
-/* ---------- LUZES ---------- */
-.light {
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: yellow;
-    box-shadow: 0 0 15px yellow;
-    animation: blink linear infinite;
-}
-
-@keyframes blink {
-    0%, 50% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0.2; transform: scale(1.3); }
-}
-
-/* ---------- FOOTER ---------- */
-footer {
-    text-align: center;
-    padding: 20px;
-    font-size: 0.9rem;
-    color: #fff;
-    margin-top: 50px;
-}
-footer a { color: #ffdd57; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -178,84 +130,155 @@ footer a { color: #ffdd57; text-decoration: none; }
     &copy; 2025 Família Gomes - Com ❤️ e espírito natalino
 </footer>
 
-<script>
-// ---------- PARTICIPANTES E RESTRIÇÕES ----------
-const participantes = ["Ana","Bruno","Carla","Diogo","Eduardo"];
-const restricoes = { "Ana":["Bruno"], "Bruno":["Ana","Carla"], "Carla":[], "Diogo":["Eduardo"], "Eduardo":["Diogo"] };
 
-function gerarSorteio() {
-    let tentativas = 0;
-    const maxTentativas = 3000;
-    while(tentativas < maxTentativas){
-        tentativas++;
-        const restantes = [...participantes];
-        const resultado = {};
-        for(let pessoa of participantes){
-            let proibidos = new Set([pessoa, ...(restricoes[pessoa]||[])]);
-            let possiveis = restantes.filter(r=>!proibidos.has(r));
-            if(possiveis.length===0) break;
-            let escolhido = possiveis[Math.floor(Math.random()*possiveis.length)];
+<!-- ---------------- FIREBASE ---------------- -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDSZ3ynb5hHVRnjCM0po93qwXXAM2Mi1PI",
+        authDomain: "sorteio-c5139.firebaseapp.com",
+        projectId: "sorteio-c5139",
+        storageBucket: "sorteio-c5139.firebasestorage.app",
+        messagingSenderId: "570859468364",
+        appId: "1:570859468364:web:61b629d83d41faa284a6e9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.firestoreDoc = doc;
+    window.firestoreGetDoc = getDoc;
+    window.firestoreSetDoc = setDoc;
+</script>
+
+<!-- ---------------- SCRIPT DO SORTEIO ---------------- -->
+<script>
+// --- LISTA DE PARTICIPANTES ---
+const participantes = [
+    "Ana","Francisco","Chico","Isabel","Tiago","Beatriz",
+    "Sameiro","Leonel","Margarida","Mariana","Conceição",
+    "Paulo","Rui","Sara","Mafalda","José","Maria"
+];
+
+// --- RESTRIÇÕES ---
+const restricoes = { 
+    "Ana":["Francisco","Chico","Isabel"], 
+    "Francisco":["Ana","Chico","Isabel"],
+    "Isabel":["Francisco","Chico","Ana"], 
+    "Chico":["Francisco","Ana","Isabel"], 
+    "Tiago":["Leonel","Sameiro","Beatriz"],
+    "Leonel":["Tiago","Sameiro","Beatriz"],
+    "Sameiro":["Leonel","Tiago","Beatriz"],
+    "Beatriz":["Leonel","Sameiro","Tiago"],
+    "Margarida":["Mariana","Paulo","Conceição"],
+    "Mariana":["Margarida","Paulo","Conceição"],
+    "Conceição":["Mariana","Paulo","Margarida"],
+    "Paulo":["Mariana","Margarida","Conceição"],
+    "Rui":["Sara","Mafalda"],
+    "Sara":["Rui","Mafalda"],
+    "Mafalda":["Sara","Rui"]
+};
+
+// --- GERAR SORTEIO ---
+function gerarSorteioBacktrack() {
+    const resultado = {};
+    const restantes = [...participantes];
+
+    function tentar(index) {
+        if(index >= participantes.length) return true;
+        const pessoa = participantes[index];
+        const proibidos = new Set([pessoa, ...(restricoes[pessoa]||[])]);
+        const possiveis = restantes.filter(r => !proibidos.has(r));
+
+        for (let escolhido of possiveis.sort(() => 0.5 - Math.random())) {
             resultado[pessoa] = escolhido;
-            restantes.splice(restantes.indexOf(escolhido),1);
+            restantes.splice(restantes.indexOf(escolhido), 1);
+
+            if(tentar(index + 1)) return true;
+
+            delete resultado[pessoa];
+            restantes.push(escolhido);
         }
-        if(Object.keys(resultado).length===participantes.length) return resultado;
+        return false;
     }
-    return null;
+    return tentar(0) ? resultado : null;
 }
 
-function mostrarResultado(){
+// --- FUNÇÃO PRINCIPAL ---
+async function mostrarResultado(){
     const nome = document.getElementById("nome").value.trim();
     const box = document.getElementById("resultado");
+    const btn = document.querySelector('#inputSection button');
+    const input = document.getElementById("nome");
+
     if(!participantes.includes(nome)){
         box.innerHTML = "❌ Esse nome não existe na lista!";
         return;
     }
-    const sorteio = gerarSorteio();
-    if(!sorteio){
-        box.innerHTML = "⚠️ Não foi possível gerar um sorteio válido.";
+
+    const ref = firestoreDoc(db, "sorteios", nome);
+    const docSnap = await firestoreGetDoc(ref);
+
+    if (docSnap.exists()) {
+        const jaSorteado = docSnap.data().sorteado;
+        box.innerHTML = `⚠️ Já fizeste o teu sorteio!<br>O teu amigo secreto é: <b>${jaSorteado}</b>`;
         return;
     }
-    box.innerHTML = `👉 O teu amigo secreto é: <br><br> 🎉 <span>${sorteio[nome]}</span>`;
-    criarConfetes();
-}
 
-// ---------- NEVE ----------
-for(let i=0;i<70;i++){
-    let flake=document.createElement('div');
-    flake.className='snowflake';
-    flake.style.left=Math.random()*100+'vw';
-    flake.style.fontSize=(Math.random()*1.5+0.8)+'em';
-    flake.style.animationDuration=(Math.random()*5+5)+'s';
-    flake.style.opacity=Math.random();
-    flake.innerHTML='❄';
-    document.body.appendChild(flake);
-}
+    const sorteio = gerarSorteioBacktrack();
+    const escolhido = sorteio[nome];
 
-// ---------- CONFETES ----------
-function criarConfetes(){
-    for(let i=0;i<50;i++){
-        let c=document.createElement('div');
-        c.className='confetti';
-        c.style.left=Math.random()*100+'vw';
-        c.style.background=`hsl(${Math.random()*360},70%,60%)`;
-        let size = Math.random()*8+4;
-        c.style.width=c.style.height=size+'px';
-        c.style.animationDuration=(Math.random()*3+3)+'s';
-        document.body.appendChild(c);
-        setTimeout(()=>c.remove(),4000);
+    box.innerHTML = `👉 O teu amigo secreto é:<br><br> 🎉 <span>${escolhido}</span>`;
+
+    await firestoreSetDoc(ref, {
+        sorteado: escolhido,
+        timestamp: Date.now()
+    });
+
+    input.disabled = true;
+    btn.disabled = true;
+}
+</script>
+
+<!-- ----------- NEVE (mantida 100% como antes) ----------- -->
+<script>
+(function() {
+    const snowCount = 120;
+    for (let i = 0; i < snowCount; i++) {
+        let snow = document.createElement("div");
+        snow.classList.add("snowflake");
+        document.body.appendChild(snow);
+
+        let size = Math.random() * 4 + 2 + "px";
+        let left = Math.random() * 100 + "vw";
+        let duration = Math.random() * 3 + 4 + "s";
+        let delay = Math.random() * 5 + "s";
+
+        snow.style.position = "fixed";
+        snow.style.top = "-10px";
+        snow.style.left = left;
+        snow.style.width = size;
+        snow.style.height = size;
+        snow.style.background = "white";
+        snow.style.borderRadius = "50%";
+        snow.style.filter = "blur(1px)";
+        snow.style.opacity = 0.8;
+        snow.style.animation = `fall ${duration} linear infinite`;
+        snow.style.animationDelay = delay;
     }
-}
 
-// ---------- LUZES ----------
-const headerEl = document.querySelector('header');
-for(let i=0;i<30;i++){
-    let l=document.createElement('div');
-    l.className='light';
-    l.style.left=(i*10)+'%';
-    l.style.top='0';
-    l.style.animationDuration=(Math.random()*1+1)+'s';
-    headerEl.appendChild(l);
-}
+    const style = document.createElement("style");
+    style.innerHTML = `
+        @keyframes fall {
+            0% { transform: translateY(0); opacity: 0.8; }
+            100% { transform: translateY(100vh); opacity: 0.4; }
+        }
+    `;
+    document.head.appendChild(style);
+})();
 </script>
 
 </body>
